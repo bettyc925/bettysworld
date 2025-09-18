@@ -22,14 +22,20 @@ import {
   Clock,
   Star,
   MessageCircle,
-  Plus
+  Plus,
+  Video,
+  Calendar
 } from "lucide-react";
 import Footer from "@/components/Footer";
+import VideoCall from "@/components/VideoCall";
+import PartyLobby from "@/components/PartyLobby";
 
 const MusicParty = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSong, setCurrentSong] = useState("Midnight Vibes");
   const [activeRoom, setActiveRoom] = useState("lofi-chill");
+  const [inCall, setInCall] = useState(false);
+  const [currentCallRoom, setCurrentCallRoom] = useState<string | null>(null);
 
   // Mock data for music parties
   const musicRooms = [
@@ -90,9 +96,30 @@ const MusicParty = () => {
     { title: "Cosmic Journey", artist: "Space Ambient", duration: "5:33", isPlaying: false }
   ];
 
+  const joinCall = (roomId: string) => {
+    setCurrentCallRoom(roomId);
+    setInCall(true);
+  };
+
+  const leaveCall = () => {
+    setInCall(false);
+    setCurrentCallRoom(null);
+  };
+
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
   };
+
+  // Show video call interface if in a call
+  if (inCall && currentCallRoom) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="pt-16">
+          <VideoCall roomId={currentCallRoom} onLeave={leaveCall} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,8 +147,12 @@ const MusicParty = () => {
       {/* Main Content */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <Tabs defaultValue="rooms" className="space-y-8">
-            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
+          <Tabs defaultValue="lobby" className="space-y-8">
+            <TabsList className="grid w-full grid-cols-4 max-w-lg mx-auto">
+              <TabsTrigger value="lobby" className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                Party Lobby
+              </TabsTrigger>
               <TabsTrigger value="rooms" className="flex items-center gap-2">
                 <Radio className="w-4 h-4" />
                 Live Rooms
@@ -135,6 +166,11 @@ const MusicParty = () => {
                 Activity
               </TabsTrigger>
             </TabsList>
+
+            {/* Party Lobby Tab */}
+            <TabsContent value="lobby">
+              <PartyLobby onJoinCall={joinCall} />
+            </TabsContent>
 
             {/* Live Rooms Tab */}
             <TabsContent value="rooms" className="space-y-6">
@@ -189,9 +225,9 @@ const MusicParty = () => {
                         <Button 
                           className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
                           variant={activeRoom === room.id ? "default" : "outline"}
-                          onClick={() => setActiveRoom(room.id)}
+                          onClick={() => joinCall(room.id)}
                         >
-                          {activeRoom === room.id ? "Listening" : "Join Room"}
+                          {activeRoom === room.id ? "Join Video Call" : "Join Party"}
                         </Button>
                       </div>
                     </CardContent>
