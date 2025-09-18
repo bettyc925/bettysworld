@@ -8,6 +8,7 @@ import { Search, Plus, Filter, Grid, List, Star, Users, MessageCircle, Heart } f
 import CharacterCard from "../components/CharacterCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import AIGuide from "@/components/AIGuide";
 
 const Characters = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -244,6 +245,16 @@ const Characters = () => {
           </div>
         )}
       </div>
+      
+      {/* AI Guide for Characters Page */}
+      <AIGuide 
+        currentPage="characters" 
+        onFeatureHighlight={(feature) => {
+          if (feature === "characters") {
+            // Could scroll to character list or highlight a specific character
+          }
+        }}
+      />
     </div>
   );
 };

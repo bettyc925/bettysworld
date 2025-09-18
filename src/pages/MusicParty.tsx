@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import AIGuide from "@/components/AIGuide";
 import { 
   Music, 
   Play, 
@@ -642,6 +643,19 @@ const MusicParty = () => {
       </section>
 
       <Footer />
+      
+      {/* AI Guide for Music Page */}
+      <AIGuide 
+        currentPage="music" 
+        onFeatureHighlight={(feature) => {
+          if (feature === "ai-recommendations") {
+            toast({
+              title: "AI Music Studio",
+              description: "Try our AI-powered music recommendations based on your mood!",
+            });
+          }
+        }}
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import SocialFeed from "@/components/SocialFeed";
 import LandingFeatures from "@/components/LandingFeatures";
 import Footer from "@/components/Footer";
 import MusicPlayer from "@/components/MusicPlayer";
+import AIGuide from "@/components/AIGuide";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, Users, MessageSquare } from "lucide-react";
 
@@ -41,6 +42,7 @@ const characters = [
 const Index = () => {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [activeTab, setActiveTab] = useState("discover");
+  const [highlightedFeature, setHighlightedFeature] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -194,6 +196,12 @@ const Index = () => {
       </main>
       
       {!selectedCharacter && <Footer />}
+      
+      {/* AI Guide */}
+      <AIGuide 
+        currentPage="home" 
+        onFeatureHighlight={setHighlightedFeature}
+      />
     </div>
   );
 };
