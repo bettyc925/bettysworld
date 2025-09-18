@@ -70,9 +70,10 @@ const Register = () => {
       } else {
         toast({
           title: "Registration successful!",
-          description: "Please check your email to confirm your account.",
+          description: "Please check your email and click the confirmation link to complete signup. You'll be automatically logged in after confirmation.",
+          duration: 8000,
         });
-        navigate('/');
+        // Don't navigate immediately - let user complete email confirmation first
       }
     } catch (error: any) {
       toast({
