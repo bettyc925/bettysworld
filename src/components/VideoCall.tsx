@@ -20,11 +20,14 @@ import {
   Volume2,
   VolumeX,
   Maximize,
-  Minimize
+  Minimize,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useVideoBackground, type BackgroundMode } from '@/utils/VideoBackgroundProcessor';
+import BackgroundSettings from '@/components/BackgroundSettings';
 
 interface VideoCallProps {
   roomId: string;
@@ -55,15 +58,28 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showBackgroundSettings, setShowBackgroundSettings] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('none');
+  const [blurAmount, setBlurAmount] = useState(15);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const processedVideoRef = useRef<HTMLVideoElement>(null);
   const chatChannelRef = useRef<any>(null);
   const presenceChannelRef = useRef<any>(null);
+  const animationFrameRef = useRef<number>();
+
+  const {
+    setBackgroundMode: setProcessorBackgroundMode,
+    setBlurAmount: setProcessorBlurAmount,
+    setBackgroundImage: setProcessorBackgroundImage,
+    processFrame,
+    isProcessing
+  } = useVideoBackground();
 
   // Initialize local media
   useEffect(() => {
@@ -94,8 +110,38 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, []);
+
+  // Video processing loop for background effects
+  useEffect(() => {
+    if (!isProcessing || !localVideoRef.current) return;
+
+    const processVideoFrame = () => {
+      if (localVideoRef.current && localVideoRef.current.readyState >= 2) {
+        const processedCanvas = processFrame(localVideoRef.current);
+        
+        if (processedCanvas && processedVideoRef.current) {
+          // Create a new video stream from the processed canvas
+          const canvasStream = processedCanvas.captureStream(30);
+          processedVideoRef.current.srcObject = canvasStream;
+        }
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(processVideoFrame);
+    };
+
+    processVideoFrame();
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isProcessing, processFrame]);
 
   // Set up real-time chat
   useEffect(() => {
@@ -308,6 +354,20 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
     setIsFullscreen(!isFullscreen);
   };
 
+  const handleBackgroundModeChange = (mode: BackgroundMode) => {
+    setBackgroundMode(mode);
+    setProcessorBackgroundMode(mode);
+  };
+
+  const handleBlurAmountChange = (amount: number) => {
+    setBlurAmount(amount);
+    setProcessorBlurAmount(amount);
+  };
+
+  const handleBackgroundImageChange = (imageUrl: string) => {
+    setProcessorBackgroundImage(imageUrl);
+  };
+
   const leaveCall = () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -333,6 +393,14 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowBackgroundSettings(true)}
+            className="text-white hover:bg-gray-700"
+          >
+            <Sparkles className="w-4 h-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -364,13 +432,33 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
         <div className={`${isChatOpen ? 'flex-1' : 'w-full'} relative`}>
           {/* Main Video */}
           <div className="relative h-full bg-gray-800">
+            {/* Hidden original video for processing */}
             <video
               ref={localVideoRef}
               autoPlay
               muted
               playsInline
-              className="w-full h-full object-cover"
+              className="hidden"
             />
+            
+            {/* Processed video (with background effects) */}
+            {isProcessing ? (
+              <video
+                ref={processedVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            )}
             
             {!isVideoOn && (
               <div className="absolute inset-0 bg-gray-700 flex items-center justify-center">
@@ -382,8 +470,14 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
             )}
             
             {/* Local Video Label */}
-            <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-              You {!isAudioOn && <MicOff className="w-3 h-3 inline ml-1" />}
+            <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm flex items-center gap-2">
+              You 
+              {!isAudioOn && <MicOff className="w-3 h-3" />}
+              {backgroundMode !== 'none' && (
+                <Badge variant="secondary" className="text-xs">
+                  {backgroundMode === 'blur' ? 'Blur' : 'Virtual BG'}
+                </Badge>
+              )}
             </div>
             
             {isScreenSharing && (
@@ -508,6 +602,17 @@ const VideoCall = ({ roomId, onLeave }: VideoCallProps) => {
           <PhoneOff className="w-4 h-4" />
         </Button>
       </div>
+
+      {/* Background Settings Modal */}
+      <BackgroundSettings
+        isOpen={showBackgroundSettings}
+        onClose={() => setShowBackgroundSettings(false)}
+        currentMode={backgroundMode}
+        onModeChange={handleBackgroundModeChange}
+        onBlurAmountChange={handleBlurAmountChange}
+        onBackgroundImageChange={handleBackgroundImageChange}
+        blurAmount={blurAmount}
+      />
     </div>
   );
 };
