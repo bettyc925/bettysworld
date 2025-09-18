@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { validateEmail } from '@/utils/validation';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +28,25 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      // Client-side validation
+      if (!validateEmail(formData.email)) {
+        toast({
+          title: "Invalid email",
+          description: "Please enter a valid email address.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.password) {
+        toast({
+          title: "Password required",
+          description: "Please enter your password.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const { error } = await signIn(formData.email, formData.password);
       
       if (error) {

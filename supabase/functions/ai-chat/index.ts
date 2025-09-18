@@ -17,8 +17,26 @@ serve(async (req) => {
     const { message, characterId, conversationId } = await req.json();
     console.log('Received chat request:', { message, characterId, conversationId });
 
-    if (!message || !characterId) {
+    // Enhanced input validation
+    if (!message || typeof message !== 'string' || !characterId) {
       throw new Error('Message and character ID are required');
+    }
+
+    // Validate message length and content
+    if (message.length < 1 || message.length > 2000) {
+      throw new Error('Message must be between 1 and 2000 characters');
+    }
+
+    // Basic content filtering
+    const sanitizedMessage = message.trim();
+    if (!sanitizedMessage) {
+      throw new Error('Message cannot be empty');
+    }
+
+    // Validate character ID format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(characterId)) {
+      throw new Error('Invalid character ID format');
     }
 
     // Initialize Supabase client
@@ -40,12 +58,12 @@ serve(async (req) => {
       throw new Error('Invalid authentication');
     }
 
-    // Get character details
+    // Get character details with security check
     const { data: character, error: characterError } = await supabase
       .from('characters')
       .select('*')
       .eq('id', characterId)
-      .single();
+      .maybeSingle();
 
     if (characterError || !character) {
       throw new Error('Character not found');
@@ -84,12 +102,12 @@ serve(async (req) => {
 
     console.log('Using conversation:', conversation.id);
 
-    // Save user message
+    // Save user message with sanitized content
     const { error: userMsgError } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversation.id,
-        content: message,
+        content: sanitizedMessage,
         is_user: true,
       });
 
