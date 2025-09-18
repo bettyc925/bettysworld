@@ -1,83 +1,216 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Edit, Trash2, Users, Sparkles } from "lucide-react";
+import { Plus, Edit, Trash2, Users, Sparkles, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { validateCharacterName, validateCharacterDescription, sanitizeInput } from "@/utils/validation";
 
 interface UserCharacter {
   id: string;
   name: string;
-  bio: string;
-  personality: string;
-  avatar: string;
-  isActive: boolean;
-  followers: number;
-  posts: number;
+  description: string | null;
+  personality: string | null;
+  avatar_url: string | null;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 const CharacterManager = () => {
-  const [characters, setCharacters] = useState<UserCharacter[]>([
-    {
-      id: "1",
-      name: "Alex Creative",
-      bio: "Digital artist and creative soul ✨",
-      personality: "Artistic, inspiring, warm",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-      isActive: true,
-      followers: 245,
-      posts: 38
-    },
-    {
-      id: "2", 
-      name: "Tech Sage",
-      bio: "Code wizard and problem solver 🚀",
-      personality: "Analytical, helpful, curious",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-      isActive: false,
-      followers: 189,
-      posts: 52
-    }
-  ]);
-
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [characters, setCharacters] = useState<UserCharacter[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCharacter, setNewCharacter] = useState({
     name: "",
-    bio: "",
+    description: "",
     personality: "",
-    avatar: ""
+    avatar_url: ""
   });
 
-  const handleCreateCharacter = () => {
-    if (newCharacter.name && newCharacter.bio) {
-      const character: UserCharacter = {
-        id: Date.now().toString(),
-        ...newCharacter,
-        avatar: newCharacter.avatar || `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=100&h=100&fit=crop&crop=face`,
-        isActive: false,
-        followers: 0,
-        posts: 0
-      };
-      setCharacters([...characters, character]);
-      setNewCharacter({ name: "", bio: "", personality: "", avatar: "" });
-      setIsCreating(false);
+  // Fetch user's characters
+  useEffect(() => {
+    if (user) {
+      fetchCharacters();
+    }
+  }, [user]);
+
+  const fetchCharacters = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('created_by', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCharacters(data || []);
+    } catch (error) {
+      console.error('Error fetching characters:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load characters. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleActiveCharacter = (id: string) => {
-    setCharacters(chars => 
-      chars.map(char => ({
-        ...char,
-        isActive: char.id === id ? !char.isActive : char.isActive
-      }))
-    );
+  const handleCreateCharacter = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate inputs
+    const nameValidation = validateCharacterName(newCharacter.name);
+    const descriptionValidation = validateCharacterDescription(newCharacter.description);
+
+    if (!nameValidation.isValid) {
+      toast({
+        title: "Invalid character name",
+        description: nameValidation.errors[0],
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!descriptionValidation.isValid) {
+      toast({
+        title: "Invalid description",
+        description: descriptionValidation.errors[0],
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { data, error } = await supabase
+        .from('characters')
+        .insert({
+          name: sanitizeInput(newCharacter.name),
+          description: newCharacter.description ? sanitizeInput(newCharacter.description) : null,
+          personality: newCharacter.personality ? sanitizeInput(newCharacter.personality) : null,
+          avatar_url: newCharacter.avatar_url || null,
+          created_by: user.id,
+          is_public: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCharacters([data, ...characters]);
+      setNewCharacter({ name: "", description: "", personality: "", avatar_url: "" });
+      setIsCreating(false);
+      
+      toast({
+        title: "Character created",
+        description: "Your new character has been created successfully.",
+      });
+    } catch (error) {
+      console.error('Error creating character:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create character. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const deleteCharacter = (id: string) => {
-    setCharacters(chars => chars.filter(char => char.id !== id));
+  const togglePublicCharacter = async (id: string, currentPublic: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .update({ is_public: !currentPublic })
+        .eq('id', id)
+        .eq('created_by', user?.id);
+
+      if (error) throw error;
+
+      setCharacters(chars => 
+        chars.map(char => ({
+          ...char,
+          is_public: char.id === id ? !currentPublic : char.is_public
+        }))
+      );
+
+      toast({
+        title: "Character updated",
+        description: `Character is now ${!currentPublic ? 'public' : 'private'}.`,
+      });
+    } catch (error) {
+      console.error('Error updating character:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update character. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  const deleteCharacter = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', id)
+        .eq('created_by', user?.id);
+
+      if (error) throw error;
+
+      setCharacters(chars => chars.filter(char => char.id !== id));
+      
+      toast({
+        title: "Character deleted",
+        description: "Character has been permanently deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting character:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete character. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading characters...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card className="p-8 text-center bg-gradient-card backdrop-blur-sm border-border/50">
+        <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
+        <p className="text-muted-foreground">
+          Please log in to create and manage your characters.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -91,7 +224,7 @@ const CharacterManager = () => {
         <Button 
           variant="cosmic" 
           onClick={() => setIsCreating(true)}
-          disabled={isCreating}
+          disabled={isCreating || isSubmitting}
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Character
@@ -112,36 +245,57 @@ const CharacterManager = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Bio</label>
+              <label className="block text-sm font-medium mb-2">Description</label>
               <Textarea
-                value={newCharacter.bio}
-                onChange={(e) => setNewCharacter({...newCharacter, bio: e.target.value})}
+                value={newCharacter.description}
+                onChange={(e) => setNewCharacter({...newCharacter, description: e.target.value})}
                 placeholder="A short description of this character..."
                 rows={2}
+                maxLength={1000}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                {newCharacter.description.length}/1000 characters
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Personality Traits</label>
+              <label className="block text-sm font-medium mb-2">Personality Traits (optional)</label>
               <Input
                 value={newCharacter.personality}
                 onChange={(e) => setNewCharacter({...newCharacter, personality: e.target.value})}
                 placeholder="e.g., Creative, empathetic, inspiring"
+                maxLength={2000}
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Avatar URL (optional)</label>
               <Input
-                value={newCharacter.avatar}
-                onChange={(e) => setNewCharacter({...newCharacter, avatar: e.target.value})}
+                value={newCharacter.avatar_url}
+                onChange={(e) => setNewCharacter({...newCharacter, avatar_url: e.target.value})}
                 placeholder="https://..."
+                type="url"
               />
             </div>
             <div className="flex gap-3">
-              <Button variant="cosmic" onClick={handleCreateCharacter}>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Create Character
+              <Button 
+                variant="cosmic" 
+                onClick={handleCreateCharacter}
+                disabled={isSubmitting || !newCharacter.name.trim()}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                {isSubmitting ? "Creating..." : "Create Character"}
               </Button>
-              <Button variant="ghost" onClick={() => setIsCreating(false)}>
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setIsCreating(false);
+                  setNewCharacter({ name: "", description: "", personality: "", avatar_url: "" });
+                }}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
             </div>
@@ -156,14 +310,14 @@ const CharacterManager = () => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-12 h-12 border-2 border-primary/30">
-                  <AvatarImage src={character.avatar} alt={character.name} />
+                  <AvatarImage src={character.avatar_url || undefined} alt={character.name} />
                   <AvatarFallback>{character.name[0]}</AvatarFallback>
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">{character.name}</h3>
-                  {character.isActive && (
+                  {character.is_public && (
                     <Badge variant="default" className="text-xs bg-cyber/20 text-cyber border-cyber/30">
-                      Active
+                      Public
                     </Badge>
                   )}
                 </div>
@@ -183,30 +337,28 @@ const CharacterManager = () => {
               </div>
             </div>
 
-            <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
-              {character.bio}
-            </p>
+            {character.description && (
+              <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
+                {character.description}
+              </p>
+            )}
+
+            {character.personality && (
+              <div className="text-xs text-muted-foreground mb-4">
+                <strong>Personality:</strong> {character.personality}
+              </div>
+            )}
 
             <div className="text-xs text-muted-foreground mb-4">
-              <strong>Personality:</strong> {character.personality}
-            </div>
-
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-              <div className="flex items-center space-x-4">
-                <span className="flex items-center space-x-1">
-                  <Users className="w-3 h-3" />
-                  <span>{character.followers}</span>
-                </span>
-                <span>{character.posts} posts</span>
-              </div>
+              <strong>Created:</strong> {new Date(character.created_at).toLocaleDateString()}
             </div>
 
             <Button 
-              variant={character.isActive ? "outline" : "cyber"}
+              variant={character.is_public ? "outline" : "cyber"}
               className="w-full"
-              onClick={() => toggleActiveCharacter(character.id)}
+              onClick={() => togglePublicCharacter(character.id, character.is_public)}
             >
-              {character.isActive ? "Set Inactive" : "Set Active"}
+              {character.is_public ? "Make Private" : "Make Public"}
             </Button>
           </Card>
         ))}
