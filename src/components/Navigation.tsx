@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, Users, MessageCircle, Search, User, Settings, Bell, LogOut } from "lucide-react";
+import { Home, Users, MessageCircle, Search, User, Settings, Bell, LogOut, Music } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Notifications from "./Notifications";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +71,12 @@ const Navigation = () => {
             <Button variant="ghost" size="sm">
               <Search className="w-4 h-4" />
               Discover
+            </Button>
+          </Link>
+          <Link to="/music-party">
+            <Button variant="ghost" size="sm">
+              <Music className="w-4 h-4" />
+              Music Party
             </Button>
           </Link>
         </div>

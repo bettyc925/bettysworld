@@ -147,6 +147,16 @@ const Index = () => {
                   >
                     Community Posts
                   </button>
+                  <button
+                    onClick={() => setActiveTab("music")}
+                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                      activeTab === "music"
+                        ? "bg-primary text-primary-foreground shadow-glow"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Music Party
+                  </button>
                 </div>
               </div>
             </section>
@@ -167,6 +177,10 @@ const Index = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                ) : activeTab === "social" ? (
+                  <div className="max-w-2xl mx-auto">
+                    <SocialFeed />
                   </div>
                 ) : (
                   <div className="max-w-2xl mx-auto">

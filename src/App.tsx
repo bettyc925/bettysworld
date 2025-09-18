@@ -8,6 +8,7 @@ import Discover from './pages/Discover';
 import Characters from './pages/Characters';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
+import MusicParty from './pages/MusicParty';
 import NotFound from './pages/NotFound';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -25,6 +26,7 @@ function App() {
             <Route path="/discover" element={<Discover />} />
             <Route path="/characters" element={<Characters />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/music-party" element={<MusicParty />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
