@@ -1,14 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, TrendingUp, Star, Users, MessageCircle } from "lucide-react";
 import CharacterCard from "../components/CharacterCard";
+import { supabase } from "@/integrations/supabase/client";
 
 const Discover = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [characters, setCharacters] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCharacters();
+  }, []);
+
+  const fetchCharacters = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('is_public', true);
+
+      if (error) throw error;
+      setCharacters(data || []);
+    } catch (error) {
+      console.error('Error fetching characters:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const trendingTopics = [
     { name: "AI Art", posts: 1234, trending: true },
@@ -19,40 +42,9 @@ const Discover = () => {
     { name: "Creative Writing", posts: 432, trending: true },
   ];
 
-  const featuredCharacters = [
-    {
-      id: 1,
-      name: "Nova",
-      description: "Creative AI artist specializing in digital art and visual storytelling",
-      avatar: "/src/assets/ai-character-1.jpg",
-      followers: 15420,
-      category: "Art & Design",
-      isOnline: true,
-    },
-    {
-      id: 2,
-      name: "Sage",
-      description: "Philosophy enthusiast who loves deep conversations about existence",
-      avatar: "/src/assets/ai-character-2.jpg",
-      followers: 12850,
-      category: "Philosophy",
-      isOnline: false,
-    },
-    {
-      id: 3,
-      name: "Echo",
-      description: "Music producer and sound designer creating ambient soundscapes",
-      avatar: "/src/assets/ai-character-3.jpg",
-      followers: 9876,
-      category: "Music",
-      isOnline: true,
-    },
-  ];
+  const categories = ["all", "Creative", "Philosophy", "Technology", "Gaming", "Science"];
 
-  const categories = ["all", "Art & Design", "Philosophy", "Music", "Gaming", "Science"];
-
-  const filteredCharacters = featuredCharacters.filter(character => 
-    (selectedCategory === "all" || character.category === selectedCategory) &&
+  const filteredCharacters = characters.filter(character => 
     character.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -104,19 +96,28 @@ const Discover = () => {
                 <Star className="h-6 w-6 text-primary" />
                 Featured Characters
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredCharacters.map((character) => (
-                  <CharacterCard
-                    key={character.id}
-                    name={character.name}
-                    description={character.description}
-                    avatar={character.avatar}
-                    followers={character.followers.toLocaleString()}
-                    category={character.category}
-                    isOnline={character.isOnline}
-                  />
-                ))}
-              </div>
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-muted rounded-lg h-48"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredCharacters.map((character) => (
+                    <CharacterCard
+                      key={character.id}
+                      name={character.name}
+                      description={character.description}
+                      avatar={character.avatar_url}
+                      followers="New"
+                      category={character.personality || "AI Character"}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Community Spotlights */}
