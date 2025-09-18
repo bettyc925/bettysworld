@@ -6,15 +6,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
-const Register = () => {
+const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    username: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -28,24 +27,24 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await signUp(formData.email, formData.password, formData.username);
+      const { error } = await signIn(formData.email, formData.password);
       
       if (error) {
         toast({
-          title: "Registration failed",
+          title: "Login failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Registration successful!",
-          description: "Please check your email to confirm your account.",
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
         });
         navigate('/');
       }
     } catch (error: any) {
       toast({
-        title: "Registration failed",
+        title: "Login failed",
         description: error.message || "Please try again later.",
         variant: "destructive",
       });
@@ -67,7 +66,7 @@ const Register = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center bg-gradient-cosmic bg-clip-text text-transparent">
-            Join SocialAI
+            Welcome Back
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -84,16 +83,6 @@ const Register = () => {
             </div>
             <div>
               <Input
-                type="text"
-                name="username"
-                placeholder="Username"
-                value={formData.username}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <Input
                 type="password"
                 name="password"
                 placeholder="Password"
@@ -103,14 +92,14 @@ const Register = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create Account"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline">
-                Sign in
+              Don't have an account?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                Sign up
               </Link>
             </p>
           </div>
@@ -120,4 +109,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;

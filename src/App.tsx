@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import Navigation from './components/Navigation';
 import Register from './pages/Register';
+import Login from './pages/Login';
 import Index from './pages/Index';
 import Discover from './pages/Discover';
 import Characters from './pages/Characters';
@@ -19,6 +20,7 @@ function App() {
         <main className="pt-16">
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/characters" element={<Characters />} />
