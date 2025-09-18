@@ -70,7 +70,21 @@ Example format:
     if (!response.ok) {
       const errorData = await response.text();
       console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      
+      // Return fallback recommendations instead of throwing error
+      const fallbackRecommendations = generateFallbackRecommendations(mood, genres);
+      console.log('Using fallback recommendations due to OpenAI API error');
+      
+      return new Response(JSON.stringify({ 
+        recommendations: fallbackRecommendations,
+        generatedAt: new Date().toISOString(),
+        mood,
+        genres,
+        fallback: true,
+        message: "Using curated recommendations while AI service is temporarily unavailable"
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
@@ -84,56 +98,161 @@ Example format:
       recommendations = JSON.parse(recommendationsText);
     } catch (parseError) {
       console.error('Failed to parse recommendations JSON:', parseError);
-      // Fallback recommendations
-      recommendations = [
-        {
-          title: "Cosmic Conversations",
-          artist: "AI Ambient",
-          genre: "Ambient",
-          mood: "Relaxing",
-          description: "Perfect for deep thinking and AI conversations",
-          duration: "3:24",
-          spotifyId: "1a2b3c4d5e6f7g8h9i0j1k2l"
-        },
-        {
-          title: "Digital Dreams",
-          artist: "Synthetic Symphony",
-          genre: "Electronic",
-          mood: "Uplifting",
-          description: "Energizing electronic beats for creativity",
-          duration: "4:12",
-          spotifyId: "2b3c4d5e6f7g8h9i0j1k2l3m"
-        }
-      ];
+      // Use fallback recommendations
+      recommendations = generateFallbackRecommendations(mood, genres);
     }
 
     return new Response(JSON.stringify({ 
       recommendations,
       generatedAt: new Date().toISOString(),
       mood,
-      genres
+      genres,
+      fallback: false
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in ai-music-recommendations function:', error);
+    
+    // Always return fallback recommendations instead of error
+    const fallbackRecommendations = generateFallbackRecommendations(mood, genres);
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
-      fallbackRecommendations: [
-        {
-          title: "Fallback Track",
-          artist: "Default Artist",
-          genre: "Ambient",
-          mood: "Calm",
-          description: "A relaxing fallback track",
-          duration: "3:00",
-          spotifyId: "fallback123456789"
-        }
-      ]
+      recommendations: fallbackRecommendations,
+      generatedAt: new Date().toISOString(),
+      mood,
+      genres,
+      fallback: true,
+      message: "Using curated recommendations while AI service is temporarily unavailable"
     }), {
-      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
+// Generate fallback recommendations based on mood and genres
+function generateFallbackRecommendations(mood?: string, genres?: string[]) {
+  const moodBasedTracks = {
+    happy: [
+      {
+        title: "Sunshine Vibes",
+        artist: "Happy Collective",
+        genre: "Pop",
+        mood: "Uplifting",
+        description: "Bright and energetic track perfect for good moods",
+        duration: "3:45",
+        spotifyId: "happy123456789"
+      },
+      {
+        title: "Golden Hour",
+        artist: "Positive Beats",
+        genre: "Indie Pop",
+        mood: "Joyful",
+        description: "Feel-good indie track with catchy melodies",
+        duration: "4:12",
+        spotifyId: "golden987654321"
+      }
+    ],
+    sad: [
+      {
+        title: "Melancholy Dreams",
+        artist: "Emotional Waves",
+        genre: "Indie Folk",
+        mood: "Melancholic",
+        description: "Beautiful acoustic track for introspective moments",
+        duration: "4:33",
+        spotifyId: "sad123456789"
+      },
+      {
+        title: "Rainy Window",
+        artist: "Contemplative Sounds",
+        genre: "Ambient",
+        mood: "Reflective",
+        description: "Atmospheric track perfect for quiet reflection",
+        duration: "5:22",
+        spotifyId: "rainy987654321"
+      }
+    ],
+    energetic: [
+      {
+        title: "High Energy",
+        artist: "Pump It Up",
+        genre: "Electronic",
+        mood: "Energetic",
+        description: "High-octane electronic track to boost your energy",
+        duration: "3:28",
+        spotifyId: "energy123456789"
+      },
+      {
+        title: "Power Drive",
+        artist: "Adrenaline Rush",
+        genre: "Rock",
+        mood: "Powerful",
+        description: "Driving rock anthem for maximum motivation",
+        duration: "4:01",
+        spotifyId: "power987654321"
+      }
+    ],
+    relaxed: [
+      {
+        title: "Cosmic Conversations",
+        artist: "AI Ambient",
+        genre: "Ambient",
+        mood: "Relaxing",
+        description: "Perfect for deep thinking and AI conversations",
+        duration: "3:24",
+        spotifyId: "cosmic123456789"
+      },
+      {
+        title: "Digital Dreams",
+        artist: "Synthetic Symphony",
+        genre: "Electronic",
+        mood: "Peaceful",
+        description: "Gentle electronic soundscapes for relaxation",
+        duration: "4:12",
+        spotifyId: "digital987654321"
+      }
+    ]
+  };
+
+  const defaultTracks = [
+    {
+      title: "Midnight Vibes",
+      artist: "Chill Collective",
+      genre: "Lofi",
+      mood: "Chill",
+      description: "Classic lofi hip-hop for any occasion",
+      duration: "3:24",
+      spotifyId: "midnight123456789"
+    },
+    {
+      title: "Neural Networks",
+      artist: "Tech Sounds",
+      genre: "Ambient",
+      mood: "Focused",
+      description: "Ambient techno for concentration and creativity",
+      duration: "4:45",
+      spotifyId: "neural987654321"
+    },
+    {
+      title: "Future Bass",
+      artist: "Electronic Dreams",
+      genre: "Electronic",
+      mood: "Upbeat",
+      description: "Modern electronic music with engaging rhythms",
+      duration: "3:56",
+      spotifyId: "future123456789"
+    }
+  ];
+
+  // Get mood-specific tracks or use default
+  let tracks = moodBasedTracks[mood?.toLowerCase() as keyof typeof moodBasedTracks] || defaultTracks;
+  
+  // Add more variety by including some default tracks
+  if (tracks.length < 6) {
+    tracks = [...tracks, ...defaultTracks.slice(0, 6 - tracks.length)];
+  }
+
+  return tracks.slice(0, 8); // Return up to 8 recommendations
+}

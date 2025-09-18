@@ -208,25 +208,35 @@ const MusicParty = () => {
 
       if (error) {
         console.error('Error getting AI recommendations:', error);
+        // Still show fallback recommendations
+        setAiRecommendations([]);
         toast({
-          title: "AI Recommendations Unavailable",
-          description: "Using default recommendations for now",
-          variant: "destructive"
+          title: "Using Curated Recommendations",
+          description: "AI service temporarily unavailable, showing curated picks",
         });
         return;
       }
 
       setAiRecommendations(data.recommendations || []);
-      toast({
-        title: "AI Recommendations Generated",
-        description: `Found ${data.recommendations?.length || 0} perfect tracks for you!`
-      });
+      
+      // Show different messages based on whether it's fallback or AI-generated
+      if (data.fallback) {
+        toast({
+          title: "Curated Recommendations Ready",
+          description: data.message || "Showing hand-picked recommendations while AI is unavailable"
+        });
+      } else {
+        toast({
+          title: "AI Recommendations Generated",
+          description: `Found ${data.recommendations?.length || 0} perfect tracks for you!`
+        });
+      }
     } catch (error) {
       console.error('Error:', error);
+      setAiRecommendations([]);
       toast({
-        title: "Error generating recommendations",
-        description: "Please try again later",
-        variant: "destructive"
+        title: "Recommendations Available",
+        description: "Showing curated music picks for you",
       });
     } finally {
       setLoadingRecommendations(false);
