@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const huggingFaceApiKey = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,30 +50,29 @@ Example format:
   }
 ]`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${huggingFaceApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a professional music curator and AI DJ. Always respond with valid JSON arrays of music recommendations.' },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 2000,
-        temperature: 0.8,
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 2000,
+          temperature: 0.8,
+          return_full_text: false,
+        },
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', errorData);
+      console.error('Hugging Face API error:', errorData);
       
       // Return fallback recommendations instead of throwing error
       const fallbackRecommendations = generateFallbackRecommendations(mood, genres);
-      console.log('Using fallback recommendations due to OpenAI API error');
+      console.log('Using fallback recommendations due to Hugging Face API error');
       
       return new Response(JSON.stringify({ 
         recommendations: fallbackRecommendations,
@@ -88,7 +87,7 @@ Example format:
     }
 
     const data = await response.json();
-    const recommendationsText = data.choices[0].message.content;
+    const recommendationsText = Array.isArray(data) ? data[0]?.generated_text : data.generated_text;
 
     console.log('Raw recommendations:', recommendationsText);
 

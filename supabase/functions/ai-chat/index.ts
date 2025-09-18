@@ -137,34 +137,59 @@ ${character.greeting_message ? `Your typical greeting: ${character.greeting_mess
 
 Respond as this character would, keeping your responses engaging, authentic to the character, and suitable for a social platform. Keep responses concise but meaningful (1-3 sentences usually).`;
 
-    console.log('Calling OpenAI with system prompt');
+    console.log('Calling Hugging Face with system prompt');
 
-    // Call OpenAI API
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Build conversation context for Hugging Face
+    const conversationContext = conversationHistory.slice(-6).map(msg => 
+      `${msg.role === 'user' ? 'User' : character.name}: ${msg.content}`
+    ).join('\n');
+
+    const fullPrompt = `${systemPrompt}
+
+Previous conversation:
+${conversationContext}
+
+User: ${sanitizedMessage}
+${character.name}:`;
+
+    // Call Hugging Face API
+    const huggingFaceResponse = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${Deno.env.get('HUGGING_FACE_ACCESS_TOKEN')}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...conversationHistory.slice(-8), // Keep last 8 messages for context
-        ],
-        max_tokens: 150,
-        temperature: 0.8,
+        inputs: fullPrompt,
+        parameters: {
+          max_new_tokens: 150,
+          temperature: 0.8,
+          return_full_text: false,
+          do_sample: true,
+        },
       }),
     });
 
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API error:', errorData);
+    if (!huggingFaceResponse.ok) {
+      const errorData = await huggingFaceResponse.text();
+      console.error('Hugging Face API error:', errorData);
       throw new Error('Failed to generate AI response');
     }
 
-    const openAIData = await openAIResponse.json();
-    const aiResponse = openAIData.choices[0].message.content;
+    const huggingFaceData = await huggingFaceResponse.json();
+    let aiResponse = Array.isArray(huggingFaceData) ? huggingFaceData[0]?.generated_text : huggingFaceData.generated_text;
+    
+    // Clean up the response
+    if (aiResponse) {
+      aiResponse = aiResponse.trim();
+      // Remove any remaining prompt text that might be included
+      const characterPrefix = `${character.name}:`;
+      if (aiResponse.startsWith(characterPrefix)) {
+        aiResponse = aiResponse.substring(characterPrefix.length).trim();
+      }
+    } else {
+      aiResponse = "I'm here to chat! How can I help you today?";
+    }
 
     console.log('Generated AI response:', aiResponse);
 
