@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AIGuide from "@/components/AIGuide";
 import PlaylistInterface from "@/components/PlaylistInterface";
+import MessageInbox from "@/components/MessageInbox";
+import DirectMessage from "@/components/DirectMessage";
 import { 
   Music, 
   Play, 
@@ -83,6 +85,8 @@ const MusicParty = () => {
   const [aiRecommendations, setAiRecommendations] = useState<MusicRecommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMessageThread, setSelectedMessageThread] = useState<any>(null);
+  const [showMessages, setShowMessages] = useState(true);
 
   // Mock data for music parties
   const musicRooms = [
@@ -395,6 +399,13 @@ const MusicParty = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <Button 
+                variant={showMessages ? "default" : "outline"} 
+                onClick={() => setShowMessages(!showMessages)}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                {showMessages ? "Hide" : "Show"} Chat
+              </Button>
               <Button variant="cosmic" size="lg" onClick={() => generateAIRecommendations()}>
                 <Sparkles className="w-4 h-4 mr-2" />
                 AI Discover
@@ -415,32 +426,35 @@ const MusicParty = () => {
         </div>
       </section>
 
-      {/* Main Content */}
+      {/* Main Content - Split Layout */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <Tabs defaultValue="home" className="space-y-8">
-            <TabsList className="grid w-full grid-cols-5 max-w-2xl mx-auto">
-              <TabsTrigger value="home" className="flex items-center gap-2">
-                <Music className="w-4 h-4" />
-                Home
-              </TabsTrigger>
-              <TabsTrigger value="genres" className="flex items-center gap-2">
-                <Grid3X3 className="w-4 h-4" />
-                Genres
-              </TabsTrigger>
-              <TabsTrigger value="ai-studio" className="flex items-center gap-2">
-                <Bot className="w-4 h-4" />
-                AI Studio
-              </TabsTrigger>
-              <TabsTrigger value="party" className="flex items-center gap-2">
-                <Video className="w-4 h-4" />
-                Live Party
-              </TabsTrigger>
-              <TabsTrigger value="player" className="flex items-center gap-2">
-                <Headphones className="w-4 h-4" />
-                Now Playing
-              </TabsTrigger>
-            </TabsList>
+          <div className={`grid gap-6 ${showMessages ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {/* Music Content */}
+            <div className={showMessages ? 'lg:col-span-2' : 'col-span-1'}>
+              <Tabs defaultValue="home" className="space-y-8">
+                <TabsList className="grid w-full grid-cols-5 max-w-2xl mx-auto">
+                  <TabsTrigger value="home" className="flex items-center gap-2">
+                    <Music className="w-4 h-4" />
+                    Home
+                  </TabsTrigger>
+                  <TabsTrigger value="genres" className="flex items-center gap-2">
+                    <Grid3X3 className="w-4 h-4" />
+                    Genres
+                  </TabsTrigger>
+                  <TabsTrigger value="ai-studio" className="flex items-center gap-2">
+                    <Bot className="w-4 h-4" />
+                    AI Studio
+                  </TabsTrigger>
+                  <TabsTrigger value="party" className="flex items-center gap-2">
+                    <Video className="w-4 h-4" />
+                    Live Party
+                  </TabsTrigger>
+                  <TabsTrigger value="player" className="flex items-center gap-2">
+                    <Headphones className="w-4 h-4" />
+                    Now Playing
+                  </TabsTrigger>
+                </TabsList>
 
             {/* Home Tab - Spotify-like Dashboard */}
             <TabsContent value="home" className="space-y-8">
@@ -812,6 +826,40 @@ const MusicParty = () => {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
+
+            {/* Messages Panel */}
+            {showMessages && (
+              <div className="lg:col-span-1">
+                <Card className="h-[800px] flex flex-col">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5" />
+                      Music Chat
+                    </CardTitle>
+                    <CardDescription>
+                      Chat with other music lovers
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-hidden">
+                    {selectedMessageThread ? (
+                      <DirectMessage
+                        user={{
+                          name: selectedMessageThread.user,
+                          avatar: selectedMessageThread.avatar,
+                          isOnline: selectedMessageThread.isOnline
+                        }}
+                      />
+                    ) : (
+                      <MessageInbox
+                        onSelectThread={(thread) => setSelectedMessageThread(thread)}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
