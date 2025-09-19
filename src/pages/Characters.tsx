@@ -27,13 +27,9 @@ const Characters = () => {
     try {
       const { data, error } = await supabase
         .from('characters')
-        .select(`
-          *, 
-          character_follows(count),
-          creator_profiles(creator_name, verification_status)
-        `)
+        .select('*')
         .eq('is_public', true)
-        .order('total_views', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         toast({
