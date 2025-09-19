@@ -181,11 +181,12 @@ export type Database = {
           category: string | null
           content_tier: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           featured_until: string | null
           greeting_message: string | null
           id: string
+          is_demo: boolean | null
           is_featured: boolean | null
           is_public: boolean | null
           name: string
@@ -203,11 +204,12 @@ export type Database = {
           category?: string | null
           content_tier?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           featured_until?: string | null
           greeting_message?: string | null
           id?: string
+          is_demo?: boolean | null
           is_featured?: boolean | null
           is_public?: boolean | null
           name: string
@@ -225,11 +227,12 @@ export type Database = {
           category?: string | null
           content_tier?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           featured_until?: string | null
           greeting_message?: string | null
           id?: string
+          is_demo?: boolean | null
           is_featured?: boolean | null
           is_public?: boolean | null
           name?: string
