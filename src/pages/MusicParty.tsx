@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AIGuide from "@/components/AIGuide";
+import PlaylistInterface from "@/components/PlaylistInterface";
 import { 
   Music, 
   Play, 
@@ -187,12 +188,115 @@ const MusicParty = () => {
     { user: "BeatDrop", action: "discovered", song: "Cosmic Journey", time: "12m ago" }
   ];
 
-  const currentPlaylist = [
-    { title: "Midnight Vibes", artist: "Chill Collective", duration: "3:24", isPlaying: true },
-    { title: "Neon Dreams", artist: "SynthWave", duration: "4:12", isPlaying: false },
-    { title: "Forest Echoes", artist: "Nature Sounds", duration: "2:58", isPlaying: false },
-    { title: "City Lights", artist: "Urban Beats", duration: "3:45", isPlaying: false },
-    { title: "Cosmic Journey", artist: "Space Ambient", duration: "5:33", isPlaying: false }
+  // Sample tracks with full metadata
+  const trendingTracks = [
+    {
+      id: "1",
+      title: "Midnight Vibes",
+      artist: "Chill Collective",
+      album: "Late Night Sessions",
+      duration: "3:24",
+      cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80",
+      genre: "Lofi Hip Hop",
+      releaseYear: 2024,
+      isLiked: true,
+      playCount: 1234567,
+      lyrics: "Verse 1: Walking through the city lights at midnight..."
+    },
+    {
+      id: "2",
+      title: "Neon Dreams",
+      artist: "SynthWave",
+      album: "Retro Future",
+      duration: "4:12",
+      cover: "https://images.unsplash.com/photo-1571974599782-87624638275c?w=400&q=80",
+      genre: "Synthwave",
+      releaseYear: 2024,
+      isLiked: false,
+      playCount: 987654,
+      lyrics: "Chorus: Electric dreams in neon lights..."
+    },
+    {
+      id: "3",
+      title: "Forest Echoes",
+      artist: "Nature Sounds",
+      album: "Ambient Earth",
+      duration: "2:58",
+      cover: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80",
+      genre: "Ambient",
+      releaseYear: 2023,
+      isLiked: true,
+      playCount: 543210,
+      lyrics: "Instrumental track with nature sounds..."
+    },
+    {
+      id: "4",
+      title: "City Lights",
+      artist: "Urban Beats",
+      album: "Metropolitan",
+      duration: "3:45",
+      cover: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=400&q=80",
+      genre: "Lo-fi",
+      releaseYear: 2024,
+      isLiked: false,
+      playCount: 876543,
+      lyrics: "Verse 1: City lights illuminate the way..."
+    },
+    {
+      id: "5",
+      title: "Cosmic Journey",
+      artist: "Space Ambient",
+      album: "Stellar Voyage",
+      duration: "5:33",
+      cover: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=400&q=80",
+      genre: "Space Ambient",
+      releaseYear: 2023,
+      isLiked: true,
+      playCount: 654321,
+      lyrics: "Instrumental space ambient composition..."
+    },
+    {
+      id: "6",
+      title: "Digital Rain",
+      artist: "Cyber Dreams",
+      album: "Matrix",
+      duration: "4:08",
+      cover: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&q=80",
+      genre: "Cyberpunk",
+      releaseYear: 2024,
+      isLiked: false,
+      playCount: 432109,
+      lyrics: "Verse: Code falling like digital rain..."
+    }
+  ];
+
+  const chillVibesTracks = [
+    {
+      id: "7",
+      title: "Morning Coffee",
+      artist: "Cafe Jazz",
+      album: "Brew Sessions",
+      duration: "3:12",
+      cover: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80",
+      genre: "Jazz",
+      releaseYear: 2024,
+      isLiked: true,
+      playCount: 789123,
+      lyrics: "Verse: Steam rising from my morning cup..."
+    },
+    {
+      id: "8",
+      title: "Ocean Waves",
+      artist: "Natural Harmony",
+      album: "Seaside Serenity",
+      duration: "6:45",
+      cover: "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&q=80",
+      genre: "Nature Sounds",
+      releaseYear: 2023,
+      isLiked: true,
+      playCount: 1123456,
+      lyrics: "Natural ocean wave sounds for relaxation..."
+    }
   ];
 
   const generateAIRecommendations = async (mood?: string, selectedGenres?: string[]) => {
@@ -367,7 +471,18 @@ const MusicParty = () => {
                 <ScrollArea className="w-full">
                   <div className="flex space-x-4 pb-4">
                     {featuredPlaylists.map((playlist) => (
-                      <Card key={playlist.id} className="min-w-[280px] group hover:shadow-lg transition-all duration-300 cursor-pointer">
+                      <Card 
+                        key={playlist.id} 
+                        className="min-w-[280px] group hover:shadow-lg transition-all duration-300 cursor-pointer"
+                        onClick={() => {
+                          // Show playlist interface when clicked
+                          const playlistTracks = playlist.id === 'trending-now' ? trendingTracks : chillVibesTracks;
+                          toast({
+                            title: `Playing ${playlist.name}`,
+                            description: `${playlistTracks.length} tracks loaded`
+                          });
+                        }}
+                      >
                         <CardContent className="p-0">
                           <div className={`aspect-square ${playlist.cover} rounded-t-lg relative overflow-hidden`}>
                             <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -416,7 +531,7 @@ const MusicParty = () => {
                   </Button>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {aiRecommendations.map((rec, index) => (
+                  {aiRecommendations.length > 0 ? aiRecommendations.map((rec, index) => (
                     <Card key={index} className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
@@ -425,7 +540,17 @@ const MusicParty = () => {
                             <p className="text-xs text-muted-foreground mb-1">{rec.artist}</p>
                             <Badge variant="outline" className="text-xs">{rec.genre}</Badge>
                           </div>
-                          <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              toast({
+                                title: "Now Playing",
+                                description: `${rec.title} by ${rec.artist}`
+                              });
+                            }}
+                          >
                             <Play className="w-4 h-4" />
                           </Button>
                         </div>
@@ -443,7 +568,47 @@ const MusicParty = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )) : (
+                    // Show placeholder tracks when AI recommendations are loading/empty
+                    trendingTracks.slice(0, 4).map((track) => (
+                      <Card key={track.id} className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-sm mb-1">{track.title}</h3>
+                              <p className="text-xs text-muted-foreground mb-1">{track.artist}</p>
+                              <Badge variant="outline" className="text-xs">{track.genre}</Badge>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                toast({
+                                  title: "Now Playing",
+                                  description: `${track.title} by ${track.artist}`
+                                });
+                              }}
+                            >
+                              <Play className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{track.album} • {track.releaseYear}</p>
+                          <div className="flex justify-between items-center text-xs text-muted-foreground">
+                            <span>{track.duration}</span>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" className="w-6 h-6 p-0">
+                                <Heart className={`w-3 h-3 ${track.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="w-6 h-6 p-0">
+                                <MoreHorizontal className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -610,18 +775,26 @@ const MusicParty = () => {
                     <CardContent>
                       <ScrollArea className="h-[400px]">
                         <div className="space-y-3">
-                          {currentPlaylist.map((song, index) => (
+                          {trendingTracks.slice(0, 5).map((song, index) => (
                             <div 
-                              key={index}
+                              key={song.id}
                               className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
-                                song.isPlaying ? 'bg-muted' : ''
+                                currentSong === song.title ? 'bg-muted' : ''
                               }`}
+                              onClick={() => {
+                                setCurrentSong(song.title);
+                                setIsPlaying(true);
+                                toast({
+                                  title: "Now Playing",
+                                  description: `${song.title} by ${song.artist}`
+                                });
+                              }}
                             >
                               <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
-                                {song.isPlaying ? (
-                                  <Play className="w-3 h-3 text-primary" />
+                                {currentSong === song.title && isPlaying ? (
+                                  <Pause className="w-3 h-3 text-primary" />
                                 ) : (
-                                  <Music className="w-3 h-3" />
+                                  <Play className="w-3 h-3" />
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
