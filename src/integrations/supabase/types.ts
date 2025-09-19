@@ -14,41 +14,232 @@ export type Database = {
   }
   public: {
     Tables: {
+      character_analytics: {
+        Row: {
+          character_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          interaction_type: string
+          ip_address: unknown | null
+          metadata: Json | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          interaction_type: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          interaction_type?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_analytics_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      character_follows: {
+        Row: {
+          character_id: string
+          created_at: string
+          follower_id: string
+          id: string
+          notification_enabled: boolean | null
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          follower_id: string
+          id?: string
+          notification_enabled?: boolean | null
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          follower_id?: string
+          id?: string
+          notification_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_follows_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      character_popularity: {
+        Row: {
+          avg_chat_duration: number | null
+          character_id: string
+          created_at: string
+          date: string
+          engagement_score: number | null
+          id: string
+          total_chats: number | null
+          total_follows: number | null
+          total_likes: number | null
+          total_shares: number | null
+          total_views: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_chat_duration?: number | null
+          character_id: string
+          created_at?: string
+          date?: string
+          engagement_score?: number | null
+          id?: string
+          total_chats?: number | null
+          total_follows?: number | null
+          total_likes?: number | null
+          total_shares?: number | null
+          total_views?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_chat_duration?: number | null
+          character_id?: string
+          created_at?: string
+          date?: string
+          engagement_score?: number | null
+          id?: string
+          total_chats?: number | null
+          total_follows?: number | null
+          total_likes?: number | null
+          total_shares?: number | null
+          total_views?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_popularity_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      character_tags: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          tag_name: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          tag_name: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          tag_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_tags_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           avatar_url: string | null
+          category: string | null
+          content_tier: string | null
           created_at: string
           created_by: string
           description: string | null
+          featured_until: string | null
           greeting_message: string | null
           id: string
+          is_featured: boolean | null
           is_public: boolean | null
           name: string
           personality: string | null
+          price_per_chat: number | null
+          rating: number | null
+          rating_count: number | null
+          total_chats: number | null
+          total_followers: number | null
+          total_views: number | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          category?: string | null
+          content_tier?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          featured_until?: string | null
           greeting_message?: string | null
           id?: string
+          is_featured?: boolean | null
           is_public?: boolean | null
           name: string
           personality?: string | null
+          price_per_chat?: number | null
+          rating?: number | null
+          rating_count?: number | null
+          total_chats?: number | null
+          total_followers?: number | null
+          total_views?: number | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          category?: string | null
+          content_tier?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          featured_until?: string | null
           greeting_message?: string | null
           id?: string
+          is_featured?: boolean | null
           is_public?: boolean | null
           name?: string
           personality?: string | null
+          price_per_chat?: number | null
+          rating?: number | null
+          rating_count?: number | null
+          total_chats?: number | null
+          total_followers?: number | null
+          total_views?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -87,6 +278,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      creator_profiles: {
+        Row: {
+          content_tier: string | null
+          created_at: string
+          creator_bio: string | null
+          creator_name: string
+          id: string
+          is_featured: boolean | null
+          social_links: Json | null
+          subscriber_count: number | null
+          total_character_views: number | null
+          total_earnings: number | null
+          updated_at: string
+          user_id: string
+          verification_status: string | null
+          website_url: string | null
+        }
+        Insert: {
+          content_tier?: string | null
+          created_at?: string
+          creator_bio?: string | null
+          creator_name: string
+          id?: string
+          is_featured?: boolean | null
+          social_links?: Json | null
+          subscriber_count?: number | null
+          total_character_views?: number | null
+          total_earnings?: number | null
+          updated_at?: string
+          user_id: string
+          verification_status?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          content_tier?: string | null
+          created_at?: string
+          creator_bio?: string | null
+          creator_name?: string
+          id?: string
+          is_featured?: boolean | null
+          social_links?: Json | null
+          subscriber_count?: number | null
+          total_character_views?: number | null
+          total_earnings?: number | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -161,7 +403,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_engagement_score: {
+        Args: { character_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
