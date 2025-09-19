@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import CharacterManager from "@/components/CharacterManager";
+import CreatorDashboard from "@/components/CreatorDashboard";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -13,17 +15,23 @@ import {
   Settings,
   MapPin,
   Calendar,
-  Link as LinkIcon
+  Link as LinkIcon,
+  BarChart3,
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  const defaultTab = searchParams.get('tab') || 'overview';
 
   useEffect(() => {
     if (!user) {
@@ -172,62 +180,125 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Profile Content */}
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column - Recent Posts */}
-            <div className="lg:col-span-2 space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Recent Posts</h2>
-                <div className="space-y-4">
-                  {recentPosts.map((post) => (
-                    <Card key={post.id} className="p-6 bg-gradient-card backdrop-blur-sm border-border/50 hover:shadow-card transition-all duration-300">
-                        <div className="flex items-start space-x-3 mb-3">
-                        <Avatar className="w-10 h-10 border border-border/50">
-                          <AvatarImage src={profile?.avatar_url} alt={profile?.display_name || 'User'} />
-                          <AvatarFallback>{profile?.display_name?.[0] || 'U'}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-semibold">{profile?.display_name || 'User'}</span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs text-muted-foreground">{post.timestamp}</span>
+          {/* Profile Content Tabs */}
+          <Tabs defaultValue={defaultTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <Star className="w-4 h-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="characters" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Characters
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="creator" className="flex items-center gap-2">
+                <Crown className="w-4 h-4" />
+                Creator Hub
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid lg:grid-cols-3 gap-8">
+                {/* Left Column - Recent Posts */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">Recent Posts</h2>
+                    <div className="space-y-4">
+                      {recentPosts.map((post) => (
+                        <Card key={post.id} className="p-6 bg-gradient-card backdrop-blur-sm border-border/50 hover:shadow-card transition-all duration-300">
+                            <div className="flex items-start space-x-3 mb-3">
+                            <Avatar className="w-10 h-10 border border-border/50">
+                              <AvatarImage src={profile?.avatar_url} alt={profile?.display_name || 'User'} />
+                              <AvatarFallback>{profile?.display_name?.[0] || 'U'}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-semibold">{profile?.display_name || 'User'}</span>
+                                <span className="text-xs text-muted-foreground">•</span>
+                                <span className="text-xs text-muted-foreground">{post.timestamp}</span>
+                              </div>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-xs text-primary">as {post.character}</span>
+                                <Badge variant="outline" className="text-xs">User Character</Badge>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-xs text-primary">as {post.character}</span>
-                            <Badge variant="outline" className="text-xs">User Character</Badge>
+                          
+                          <p className="text-sm leading-relaxed mb-4">{post.content}</p>
+                          
+                          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+                            <button className="flex items-center space-x-2 hover:text-accent transition-colors">
+                              <Heart className="w-4 h-4" />
+                              <span>{post.likes}</span>
+                            </button>
+                            <button className="flex items-center space-x-2 hover:text-primary transition-colors">
+                              <MessageCircle className="w-4 h-4" />
+                              <span>{post.comments}</span>
+                            </button>
                           </div>
-                        </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Quick Stats */}
+                <div className="space-y-6">
+                  <Card className="p-6 bg-gradient-card backdrop-blur-sm border-border/50">
+                    <h3 className="font-semibold mb-4 flex items-center">
+                      <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                      Quick Stats
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total Views</span>
+                        <span className="font-semibold">2.1K</span>
                       </div>
-                      
-                      <p className="text-sm leading-relaxed mb-4">{post.content}</p>
-                      
-                      <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-                        <button className="flex items-center space-x-2 hover:text-accent transition-colors">
-                          <Heart className="w-4 h-4" />
-                          <span>{post.likes}</span>
-                        </button>
-                        <button className="flex items-center space-x-2 hover:text-primary transition-colors">
-                          <MessageCircle className="w-4 h-4" />
-                          <span>{post.comments}</span>
-                        </button>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Characters</span>
+                        <span className="font-semibold">3</span>
                       </div>
-                    </Card>
-                  ))}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Avg Rating</span>
+                        <span className="font-semibold">4.8</span>
+                      </div>
+                    </div>
+                  </Card>
                 </div>
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Right Column - Character Manager */}
-            <div className="space-y-6">
+            {/* Characters Tab */}
+            <TabsContent value="characters" className="space-y-6">
+              <CharacterManager />
+            </TabsContent>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics" className="space-y-6">
+              <CreatorDashboard />
+            </TabsContent>
+
+            {/* Creator Hub Tab */}
+            <TabsContent value="creator" className="space-y-6">
               <Card className="p-6 bg-gradient-card backdrop-blur-sm border-border/50">
-                <h3 className="font-semibold mb-4 flex items-center">
-                  <Star className="w-4 h-4 mr-2 text-primary" />
-                  Your Characters
-                </h3>
-                <CharacterManager />
+                <div className="text-center space-y-4">
+                  <Crown className="w-12 h-12 text-yellow-500 mx-auto" />
+                  <h3 className="text-xl font-semibold">Creator Hub</h3>
+                  <p className="text-muted-foreground">
+                    Join our creator program to monetize your characters and access exclusive features.
+                  </p>
+                  <Button variant="cosmic" size="lg">
+                    Apply for Creator Program
+                  </Button>
+                </div>
               </Card>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       <Footer />

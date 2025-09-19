@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Filter, Grid, List, Star, Users, MessageCircle, Heart } from "lucide-react";
+import { Search, Plus, Filter, Grid, List, Star, Users, MessageCircle, Heart, Eye } from "lucide-react";
 import CharacterCard from "../components/CharacterCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -27,9 +27,13 @@ const Characters = () => {
     try {
       const { data, error } = await supabase
         .from('characters')
-        .select('*')
+        .select(`
+          *, 
+          character_follows(count),
+          creator_profiles(creator_name, verification_status)
+        `)
         .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .order('total_views', { ascending: false });
 
       if (error) {
         toast({
@@ -52,15 +56,32 @@ const Characters = () => {
   };
 
   const filteredCharacters = characters.filter(character => 
-    (selectedCategory === "all" || character.personality?.toLowerCase().includes(selectedCategory.toLowerCase())) &&
+    (selectedCategory === "all" || character.category === selectedCategory.toLowerCase() || 
+     character.personality?.toLowerCase().includes(selectedCategory.toLowerCase())) &&
     character.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Track character views
+  const trackCharacterView = async (characterId: string) => {
+    try {
+      await supabase
+        .from('character_analytics')
+        .insert({
+          character_id: characterId,
+          user_id: null, // Allow anonymous tracking
+          interaction_type: 'view',
+          session_id: sessionStorage.getItem('session_id') || 'anonymous'
+        });
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
+
   const stats = {
     totalCharacters: characters.length,
-    onlineCharacters: Math.floor(characters.length * 0.6), // Simulate online status
-    totalFollowers: characters.length * 1200, // Simulate follower count
-    totalChats: characters.length * 500, // Simulate chat count
+    onlineCharacters: Math.floor(characters.length * 0.6),
+    totalFollowers: characters.reduce((sum, char) => sum + (char.total_followers || 0), 0),
+    totalChats: characters.reduce((sum, char) => sum + (char.total_chats || 0), 0),
   };
 
   return (
@@ -134,7 +155,10 @@ const Characters = () => {
               <Filter className="h-4 w-4 mr-2" />
               Filters
             </Button>
-            <Button size="sm">
+            <Button 
+              size="sm"
+              onClick={() => window.location.href = '/profile?tab=characters'}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Character
             </Button>
@@ -166,17 +190,28 @@ const Characters = () => {
           }`}>
             {filteredCharacters.map((character) => (
               viewMode === "grid" ? (
-                <CharacterCard
+                <div 
                   key={character.id}
-                  name={character.name}
-                  description={character.description}
-                  avatar={character.avatar_url || "/src/assets/ai-character-1.jpg"}
-                  followers="1.2K"
-                  category={character.personality?.split(',')[0] || "General"}
-                  isOnline={Math.random() > 0.4}
-                />
+                  onClick={() => trackCharacterView(character.id)}
+                >
+                  <CharacterCard
+                    name={character.name}
+                    description={character.description}
+                    avatar={character.avatar_url || "/src/assets/ai-character-1.jpg"}
+                    followers={character.total_followers ? character.total_followers.toLocaleString() : "0"}
+                    category={character.category || "General"}
+                    isOnline={Math.random() > 0.4}
+                    rating={character.rating || 0}
+                    totalChats={character.total_chats || 0}
+                    totalViews={character.total_views || 0}
+                  />
+                </div>
               ) : (
-                <Card key={character.id} className="hover:shadow-elegant transition-all duration-300">
+                <Card 
+                  key={character.id} 
+                  className="hover:shadow-elegant transition-all duration-300 cursor-pointer"
+                  onClick={() => trackCharacterView(character.id)}
+                >
                   <CardContent className="p-6">
                     <div className="flex gap-4">
                       <img
@@ -190,21 +225,30 @@ const Characters = () => {
                           {Math.random() > 0.4 && (
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                           )}
-                          <Badge variant="secondary">{character.personality?.split(',')[0] || "General"}</Badge>
+                          <Badge variant="secondary">{character.category || "General"}</Badge>
+                          {character.is_featured && (
+                            <Badge variant="default" className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30">
+                              Featured
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-muted-foreground mb-3">{character.description}</p>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                           <span className="flex items-center gap-1">
                             <Users className="h-4 w-4" />
-                            1.2K
+                            {character.total_followers?.toLocaleString() || "0"}
                           </span>
                           <span className="flex items-center gap-1">
                             <MessageCircle className="h-4 w-4" />
-                            500
+                            {character.total_chats?.toLocaleString() || "0"}
                           </span>
                           <span className="flex items-center gap-1">
                             <Star className="h-4 w-4" />
-                            4.8
+                            {character.rating?.toFixed(1) || "0.0"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" />
+                            {character.total_views?.toLocaleString() || "0"}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">

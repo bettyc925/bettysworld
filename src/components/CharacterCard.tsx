@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Heart, Share, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, MessageCircle, Star, Heart, Share2, Eye, Sparkles } from "lucide-react";
 
 interface CharacterCardProps {
   name: string;
@@ -8,9 +9,22 @@ interface CharacterCardProps {
   followers: string;
   category: string;
   isOnline?: boolean;
+  rating?: number;
+  totalChats?: number;
+  totalViews?: number;
 }
 
-const CharacterCard = ({ name, description, avatar, followers, category, isOnline = true }: CharacterCardProps) => {
+const CharacterCard = ({ 
+  name, 
+  description, 
+  avatar, 
+  followers, 
+  category, 
+  isOnline = false, 
+  rating = 0, 
+  totalChats = 0, 
+  totalViews = 0 
+}: CharacterCardProps) => {
   return (
     <div className="group relative bg-gradient-card backdrop-blur-sm rounded-2xl border border-border/50 p-6 hover:shadow-cosmic transition-all duration-500 hover:scale-105 overflow-hidden">
       {/* Gradient overlay */}
@@ -32,9 +46,9 @@ const CharacterCard = ({ name, description, avatar, followers, category, isOnlin
               </div>
             )}
           </div>
-          <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+          <Badge variant="secondary" className="text-xs">
             {category}
-          </div>
+          </Badge>
         </div>
 
         {/* Character Info */}
@@ -47,22 +61,40 @@ const CharacterCard = ({ name, description, avatar, followers, category, isOnlin
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
-          <span>{followers} followers</span>
-          <div className="flex items-center space-x-4">
+        {/* Enhanced Stats */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+          <span className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            {followers}
+          </span>
+          <span className="flex items-center gap-1">
+            <MessageCircle className="h-4 w-4" />
+            {totalChats.toLocaleString()}
+          </span>
+          <span className="flex items-center gap-1">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            {rating.toFixed(1)}
+          </span>
+        </div>
+        
+        <div className="text-xs text-muted-foreground mb-4 flex items-center justify-between">
+          <span className="flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            {totalViews.toLocaleString()} views
+          </span>
+          <div className="flex gap-2">
             <button className="hover:text-accent transition-colors">
-              <Heart className="w-4 h-4" />
+              <Heart className="w-3 h-3" />
             </button>
             <button className="hover:text-cyber transition-colors">
-              <Share className="w-4 h-4" />
+              <Share2 className="w-3 h-3" />
             </button>
           </div>
         </div>
 
         {/* Action Button */}
         <Button variant="cyber" className="w-full group-hover:shadow-cosmic">
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle className="w-4 h-4 mr-2" />
           Start Chat
         </Button>
       </div>
