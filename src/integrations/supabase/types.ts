@@ -403,7 +403,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_creator_profiles: {
+        Row: {
+          content_tier: string | null
+          created_at: string | null
+          creator_bio: string | null
+          creator_name: string | null
+          id: string | null
+          is_featured: boolean | null
+          social_links: Json | null
+          updated_at: string | null
+          user_id: string | null
+          verification_status: string | null
+          website_url: string | null
+        }
+        Insert: {
+          content_tier?: string | null
+          created_at?: string | null
+          creator_bio?: string | null
+          creator_name?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          social_links?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          content_tier?: string | null
+          created_at?: string | null
+          creator_bio?: string | null
+          creator_name?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          social_links?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_engagement_score: {
